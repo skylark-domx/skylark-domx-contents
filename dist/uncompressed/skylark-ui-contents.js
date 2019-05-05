@@ -113,19 +113,6 @@ define('skylark-ui-contents/contents',[
     	"undo"
     ];
 
-	contents.editable = function(node,value) {
-		if (value === undefined) {
-   			return node.contentEditable == "true"
-		} else {
-			if (!value) {
-				value = null;
-			} else {
-				value = "true";
-			}
-			datax.attr(node,"contentEditable",value);
-		}
-		
-	};
 
     contents.execCommand = function(node,command) {
    	    document.execCommand(command, false, null);
