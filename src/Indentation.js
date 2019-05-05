@@ -14,7 +14,9 @@ define([
   Indentation.pluginName = 'Indentation';
 
   Indentation.prototype.opts = {
-    tabIndent: true
+    tabIndent: true,
+    indentWidth: 40
+   
   };
 
   Indentation.prototype.init = function(editor,opts) {

@@ -1,5 +1,6 @@
 define([
 	"skylark-langx/langx",
+	"skylark-utils-dom/noder",
 	"skylark-utils-dom/query",
 	"./contents",
 	"./hotkeys",
@@ -11,7 +12,7 @@ define([
 	"./Formatter", 
 	"./Indentation", 
 	"./Clipboard"
-],function(langx, $, contents,hotkeys,Util,InputManager,Selection,UndoManager,Keystroke,Formatter,Indentation,Clipboard){
+],function(langx, noder, $, contents,hotkeys,Util,InputManager,Selection,UndoManager,Keystroke,Formatter,Indentation,Clipboard){
   var Editor = langx.Evented.inherit({
     init : function(el,opts) {
     	this.el = el;
@@ -124,10 +125,337 @@ define([
 		} else {
 		  return this.body.find('textarea:visible').blur();
 		}
+	},
+
+	isActive : function(state) {
+		return document.queryCommandState(state) === true; //'bold'
+	},
+
+	status : function(cmd,htmlTag) {
+		if (cmd === "alignment") {
+		    var nodes = this.selection.nodes().filter(htmlTag);
+		    if (nodes.length < 1) {
+		    	return null;
+		    } else {
+		      return nodes.first().css('text-align');
+		    }
+
+		}
+	},
+
+	alignment : function(align,htmlTag) {
+	    if (align !== 'left' && align !== 'center' && align !== 'right') {
+	      throw new Error("simditor alignment button: invalid align " + align);
+	    }
+    	var nodes = this.selection.nodes().filter(htmlTag);
+	    nodes.css({
+	      'text-align': align === 'left' ? '' : align
+	    });
+	    this.trigger('valuechanged');
+	    return this.inputManager.throttledSelectionChanged();
+
+	},
+
+	blockquote : function(htmlTag,disableTag) {
+	    var $rootNodes, clearCache, nodeCache;
+	    $rootNodes = this.selection.rootNodes();
+	    $rootNodes = $rootNodes.filter(function(i, node) {
+	      return !$(node).parent().is('blockquote');
+	    });
+	    this.selection.save();
+	    nodeCache = [];
+	    clearCache = (function(_this) {
+	      return function() {
+	        if (nodeCache.length > 0) {
+	          $("<" + _this.htmlTag + "/>").insertBefore(nodeCache[0]).append(nodeCache);
+	          return nodeCache.length = 0;
+	        }
+	      };
+	    })(this);
+	    $rootNodes.each((function(_this) {
+	      return function(i, node) {
+	        var $node;
+	        $node = $(node);
+	        if (!$node.parent().is(_this.body)) {
+	          return;
+	        }
+	        if ($node.is(htmlTag)) {
+	          clearCache();
+	          return $node.children().unwrap();
+	        } else if ($node.is(disableTag) || _this.util.isDecoratedNode($node)) {
+	          return clearCache();
+	        } else {
+	          return nodeCache.push(node);
+	        }
+	      };
+	    })(this));
+	    clearCache();
+	    this.selection.restore();
+	    return this.trigger('valuechanged');
+
+	},
+
+	blockCode : function(htmlTag,disableTag) {
+	    var $rootNodes, clearCache, nodeCache, resultNodes;
+	    $rootNodes = this.selection.rootNodes();
+	    nodeCache = [];
+	    resultNodes = [];
+	    clearCache = (function(_this) {
+	      return function() {
+	        var $pre;
+	        if (!(nodeCache.length > 0)) {
+	          return;
+	        }
+	        $pre = $("<" + htmlTag + "/>").insertBefore(nodeCache[0]).text(_this.formatter.clearHtml(nodeCache));
+	        resultNodes.push($pre[0]);
+	        return nodeCache.length = 0;
+	      };
+	    })(this);
+	    $rootNodes.each((function(_this) {
+	      return function(i, node) {
+	        var $node, $p;
+	        $node = $(node);
+	        if ($node.is(htmlTag)) {
+	          clearCache();
+	          $p = $('<p/>').append($node.html().replace('\n', '<br/>')).replaceAll($node);
+	          return resultNodes.push($p[0]);
+	        } else if ($node.is(disableTag) || _this.util.isDecoratedNode($node) || $node.is('blockquote')) {
+	          return clearCache();
+	        } else {
+	          return nodeCache.push(node);
+	        }
+	      };
+	    })(this));
+	    clearCache();
+	    this.selection.setRangeAtEndOf($(resultNodes).last());
+	    return this.trigger('valuechanged');
+
+	},
+
+	fontColor : function(hex,isDefault,coloredText) {
+        var range = this.selection.range();
+        if (!isDefault && range.collapsed) {
+          textNode = document.createTextNode(coloredText);
+          range.insertNode(textNode);
+          range.selectNodeContents(textNode);
+        }
+        this.selection.range(range);
+        document.execCommand('styleWithCSS', false, true);
+        document.execCommand('foreColor', false, hex);
+        document.execCommand('styleWithCSS', false, false);
+        if (!this.util.support.oninput) {
+          return this.trigger('valuechanged');
+        }
+
+	},
+
+	fontScale : function(param,sizeMap) {
+  		if (!sizeMap){
+  			sizeMap = {
+			    'x-large': '1.5em',
+			    'large': '1.25em',
+			    'small': '.75em',
+			    'x-small': '.5em'
+		   };
+		}
+
+	    var $scales, containerNode, range;
+	    range = this.selection.range();
+	    if (range.collapsed) {
+	      return;
+	    }
+	    this.selection.range(range);
+	    document.execCommand('styleWithCSS', false, true);
+	    document.execCommand('fontSize', false, param);
+	    document.execCommand('styleWithCSS', false, false);
+	    this.selection.reset();
+	    this.selection.range();
+	    containerNode = this.selection.containerNode();
+	    if (containerNode[0].nodeType === Node.TEXT_NODE) {
+	      $scales = containerNode.closest('span[style*="font-size"]');
+	    } else {
+	      $scales = containerNode.find('span[style*="font-size"]');
+	    }
+	    $scales.each((function(_this) {
+	      return function(i, n) {
+	        var $span, size;
+	        $span = $(n);
+	        size = n.style.fontSize;
+	        if (/large|x-large|small|x-small/.test(size)) {
+	          return $span.css('fontSize', sizeMap[size]);
+	        } else if (size === 'medium') {
+	          if ($span[0].style.length > 1) {
+	            return $span.css('fontSize', '');
+	          } else {
+	            return $span.replaceWith($span.contents());
+	          }
+	        }
+	      };
+	    })(this));
+	    return this.trigger('valuechanged');
+	},
+
+	hr : function() {
+	    var $hr, $newBlock, $nextBlock, $rootBlock;
+	    $rootBlock = this.selection.rootNodes().first();
+	    $nextBlock = $rootBlock.next();
+	    if ($nextBlock.length > 0) {
+	      this.selection.save();
+	    } else {
+	      $newBlock = $('<p/>').append(this.util.phBr);
+	    }
+	    $hr = $('<hr/>').insertAfter($rootBlock);
+	    if ($newBlock) {
+	      $newBlock.insertAfter($hr);
+	      this.selection.setRangeAtStartOf($newBlock);
+	    } else {
+	      this.selection.restore();
+	    }
+	    return this.trigger('valuechanged');
+	},
+
+	inlineCode : function(active) {
+	    var $code, $contents, range;
+	    range = this.selection.range();
+	    if (this.active) {
+	      range.selectNodeContents(this.node[0]);
+	      this.selection.save(range);
+	      this.node.contents().unwrap();
+	      this.selection.restore();
+	    } else {
+	      $contents = $(range.extractContents());
+	      $code = $("<" + this.htmlTag + "/>").append($contents.contents());
+	      range.insertNode($code[0]);
+	      range.selectNodeContents($code[0]);
+	      this.selection.range(range);
+	    }
+	    return this.trigger('valuechanged');
+
+	},
+
+	indent : function() {
+	    return this.indentation.indent();
+	},
+
+	link : function(active,defaultLinkText) {
+	    var $contents, $link, $newBlock, linkText, range, txtNode;
+	    range = this.selection.range();
+	    if (active) {
+		  var node = this.selection.startNodes();
+	      txtNode = document.createTextNode(node.text());
+	      node.replaceWith(txtNode);
+	      range.selectNode(txtNode);
+	    } else {
+	      $contents = $(range.extractContents());
+	      linkText = this.formatter.clearHtml($contents.contents(), false);
+	      $link = $('<a/>', {
+	        href: '',
+	        target: '_blank',
+	        text: linkText || defaultLinkText
+	      });
+	      if (this.selection.blockNodes().length > 0) {
+	        range.insertNode($link[0]);
+	      } else {
+	        $newBlock = $('<p/>').append($link);
+	        range.insertNode($newBlock[0]);
+	      }
+	      range.selectNodeContents($link[0]);
+	    }
+	    this.selection.range(range);
+	    return this.trigger('valuechanged');
+
+	},
+
+	list : function(type,param,disableTag) {
+      var $list, $rootNodes, anotherType;
+      $rootNodes = this.selection.blockNodes();
+      anotherType = type === 'ul' ? 'ol' : 'ul';
+      this.selection.save();
+      $list = null;
+      $rootNodes.each((function(_this) {
+        return function(i, node) {
+          var $node;
+          $node = $(node);
+          if ($node.is('blockquote, li') || $node.is(disableTag) || _this.util.isDecoratedNode($node) || !noder.contains(document, node)) {
+            return;
+          }
+          if ($node.is(type)) {
+            $node.children('li').each(function(i, li) {
+              var $childList, $li;
+              $li = $(li);
+              $childList = $li.children('ul, ol').insertAfter($node);
+              return $('<p/>').append($(li).html() || _this.util.phBr).insertBefore($node);
+            });
+            return $node.remove();
+          } else if ($node.is(anotherType)) {
+            return $('<' + type + '/>').append($node.contents()).replaceAll($node);
+          } else if ($list && $node.prev().is($list)) {
+            $('<li/>').append($node.html() || _this.util.phBr).appendTo($list);
+            return $node.remove();
+          } else {
+            $list = $("<" + type + "><li></li></" + type + ">");
+            $list.find('li').append($node.html() || _this.util.phBr);
+            return $list.replaceAll($node);
+          }
+        };
+      })(this));
+      this.selection.restore();
+      return this.trigger('valuechanged');
+
+	},
+
+	outdent : function() {
+	    return this.indentation.indent(true);
+	},
+
+	// toggle
+	title : function(param,disableTag) {
+	    var $rootNodes;
+	    $rootNodes = this.selection.rootNodes();
+	    this.selection.save();
+	    $rootNodes.each((function(_this) {
+	      return function(i, node) {
+	        var $node;
+	        $node = $(node);
+	        if ($node.is('blockquote') || $node.is(param) || $node.is(disableTag) || _this.util.isDecoratedNode($node)) {
+	          return;
+	        }
+	        return $('<' + param + '/>').append($node.contents()).replaceAll($node);
+	      };
+	    })(this));
+	    this.selection.restore();
+	    return this.trigger('valuechanged');
+
 	}
 
 
+
   });
+
+	var commands =  [
+		"bold", // toggle 
+		"insertImage",
+		"insertorderedlist",
+		"insertunorderedlist",
+		"italic", // toggle
+		"justifyLeft",
+		"justifyCenter",
+		"justifyFull",
+		"justifyRight",
+		"strikethrough",
+		"underline",
+		"undo"
+	];
+
+	commands.forEach(function(cmd){
+		Editor.prototype[cmd] = function() {
+	      document.execCommand(cmd,false,null);
+	      if (!this.util.support.oninput) {
+	        this.trigger('valuechanged');
+	      }
+	      return $(document).trigger('selectionchange');					
+		};
+	});
 
 
 	function editable(el,opts) {

@@ -6200,25 +6200,6 @@ define('skylark-ui-contents/contents',[
         return contents;
     };
 
-    var commands =  [
-    	"bold", // toggle 
-    	"insertImage",
-    	"insertorderedlist",
-    	"insertunorderedlist",
-    	"italic", // toggle
-    	"justifyLeft",
-    	"justifyCenter",
-    	"justifyFull",
-    	"justifyRight",
-    	"strikeThrough",
-    	"underline",
-    	"undo"
-    ];
-
-
-    contents.execCommand = function(node,command) {
-   	    document.execCommand(command, false, null);
-    };
 
     return skylark.attach("ui.contents",contents);
 
