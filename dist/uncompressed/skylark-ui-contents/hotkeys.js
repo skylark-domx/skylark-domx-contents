@@ -211,7 +211,7 @@ define([
     return this;
   };
 
-  return function(opts) {
+  return  contents.hotkeys = function(opts) {
     return new Hotkeys(opts);
   };
 

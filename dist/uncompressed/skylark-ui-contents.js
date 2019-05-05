@@ -122,7 +122,8 @@ define('skylark-ui-contents/contents',[
 
 });
 define('skylark-ui-contents/main',[
-	"./contents"
+	"./contents",
+	""
 ],function(contents){
 
 	return contents;

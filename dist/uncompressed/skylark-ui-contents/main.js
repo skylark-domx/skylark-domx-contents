@@ -1,5 +1,6 @@
 define([
-	"./contents"
+	"./contents",
+	""
 ],function(contents){
 
 	return contents;
