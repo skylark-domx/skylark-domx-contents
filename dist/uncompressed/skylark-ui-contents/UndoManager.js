@@ -110,7 +110,7 @@ define([
 
   UndoManager.prototype._pushUndoState = function() {
     var caret;
-    if (this.editor.triggerHandler('pushundostate') === false) {
+    if (this.editor.trigger('pushundostate') === false) {
       return;
     }
     caret = this.caretPosition();

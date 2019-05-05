@@ -159,7 +159,7 @@ define([
           }
         }
         _this.lastCaretPosition = null;
-        _this.editor.triggerHandler('focus');
+        _this.editor.trigger('focus');
         if (!_this.editor.util.support.onselectionchange) {
           return _this.throttledSelectionChanged();
         }
@@ -176,7 +176,7 @@ define([
     this.editor.sync();
     this.focused = false;
     this.lastCaretPosition = (ref = this.editor.undoManager.currentState()) != null ? ref.caret : void 0;
-    return this.editor.triggerHandler('blur');
+    return this.editor.trigger('blur');
   };
 
   InputManager.prototype._onMouseUp = function(e) {
@@ -187,7 +187,7 @@ define([
 
   InputManager.prototype._onKeyDown = function(e) {
     var ref, ref1;
-    if (this.editor.triggerHandler(e) === false) {
+    if (this.editor.trigger(e) === false) {
       return false;
     }
     if (this.editor.hotkeys.respondTo(e)) {
@@ -210,14 +210,14 @@ define([
   };
 
   InputManager.prototype._onKeyPress = function(e) {
-    if (this.editor.triggerHandler(e) === false) {
+    if (this.editor.trigger(e) === false) {
       return false;
     }
   };
 
   InputManager.prototype._onKeyUp = function(e) {
     var p, ref;
-    if (this.editor.triggerHandler(e) === false) {
+    if (this.editor.trigger(e) === false) {
       return false;
     }
     if (!this.editor.util.support.onselectionchange && (ref = e.which, indexOf.call(this._arrowKeys, ref) >= 0)) {
@@ -232,7 +232,7 @@ define([
   };
 
   InputManager.prototype._onDrop = function(e) {
-    if (this.editor.triggerHandler(e) === false) {
+    if (this.editor.trigger(e) === false) {
       return false;
     }
     return this.throttledValueChanged();
