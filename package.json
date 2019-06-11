@@ -1,5 +1,5 @@
 {
-  "name": "skylark-ui-contents",
+  "name": "skylark-domx-contents",
   "version": "0.9.0",
   "description": "A dom plugin for  editing  the content of html element.",
   "main": "-",
@@ -10,7 +10,7 @@
   "homepage": "www.skylarkjs.org",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/skylarkui/skylark-ui-contents.git"
+    "url": "git+https://github.com/skylark-domx/skylark-domx-contents.git"
   },
   "keywords": [
     "skylark",
@@ -22,10 +22,10 @@
   ],
   "author": "Hudaokeji Co.,Ltd",
   "license": "MIT",
-  "bugs": "https://github.com/skylarkui/skylark-ui-contents/issues",
+  "bugs": "https://github.com/skylark-domx/skylark-domx-contents/issues",
   "devDependencies": {
-    "skylark-langx": "https://github.com/skylarklangx/skylark-langx#master",
-    "skylark-utils-dom": "https://github.com/skylarkutils/skylark-utils-dom#master"
+    "skylark-langx": "git+https://github.com/skylarklangx/skylark-langx.git#master",
+    "skylark-utils-dom": "git+https://github.com/skylarkutils/skylark-utils-dom.git#master"
   },
   "engines": {
     "node": ">=0.8.0"

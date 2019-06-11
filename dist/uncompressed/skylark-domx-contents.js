@@ -1,5 +1,5 @@
 /**
- * skylark-ui-contents - A dom plugin for  editing  the content of html element.
+ * skylark-domx-contents - A dom plugin for  editing  the content of html element.
  * @author Hudaokeji Co.,Ltd
  * @version v0.9.0
  * @link www.skylarkjs.org
@@ -86,7 +86,7 @@
 
 })(function(define,require) {
 
-define('skylark-ui-contents/contents',[
+define('skylark-domx-contents/contents',[
     "skylark-langx/skylark",
     "skylark-langx/langx",
     "skylark-utils-dom/noder",
@@ -102,15 +102,15 @@ define('skylark-ui-contents/contents',[
     return skylark.attach("ui.contents",contents);
 
 });
-define('skylark-ui-contents/main',[
+define('skylark-domx-contents/main',[
 	"./contents",
 	""
 ],function(contents){
 
 	return contents;
 });
-define('skylark-ui-contents', ['skylark-ui-contents/main'], function (main) { return main; });
+define('skylark-domx-contents', ['skylark-domx-contents/main'], function (main) { return main; });
 
 
 },this);
-//# sourceMappingURL=sourcemaps/skylark-ui-contents.js.map
+//# sourceMappingURL=sourcemaps/skylark-domx-contents.js.map

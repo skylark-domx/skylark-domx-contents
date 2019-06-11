@@ -1,5 +1,5 @@
 /**
- * skylark-ui-contents - A dom plugin for  editing  the content of html element.
+ * skylark-domx-contents - A dom plugin for  editing  the content of html element.
  * @author Hudaokeji Co.,Ltd
  * @version v0.9.0
  * @link www.skylarkjs.org
@@ -218,7 +218,7 @@ define('skylark-langx/types',[
     }
 
     function isHtmlNode(obj) {
-        return obj && (obj instanceof Node);
+        return obj && obj.nodeType; // obj instanceof Node; //Consider the elements in IFRAME
     }
 
     function isInstanceOf( /*Object*/ value, /*Type*/ type) {
@@ -409,6 +409,10 @@ define('skylark-langx/arrays',[
         });
     }
 
+    function filter2(array,func) {
+      return filter.call(array,func);
+    }
+
     function flatten(array) {
         if (isArrayLike(array)) {
             var result = [];
@@ -512,6 +516,11 @@ define('skylark-langx/arrays',[
 
       return first;
     }
+
+    function reduce(array,callback,initialValue) {
+        return Array.prototype.reduce.call(array,callback,initialValue);
+    }
+
     function uniq(array) {
         return filter.call(array, function(item, idx) {
             return array.indexOf(item) == idx;
@@ -533,6 +542,8 @@ define('skylark-langx/arrays',[
             }
         },
 
+        filter : filter2,
+        
         flatten: flatten,
 
         inArray: inArray,
@@ -545,6 +556,8 @@ define('skylark-langx/arrays',[
 
         map : map,
         
+        reduce : reduce,
+
         uniq : uniq
 
     }
@@ -1022,6 +1035,37 @@ define('skylark-langx/objects',[
         return args.target;
     }
 
+   // Return a copy of the object without the blacklisted properties.
+    function omit(obj, prop1,prop2) {
+        if (!obj) {
+            return null;
+        }
+        var result = mixin({},obj);
+        for(var i=1;i<arguments.length;i++) {
+            var pn = arguments[i];
+            if (pn in obj) {
+                delete result[pn];
+            }
+        }
+        return result;
+
+    }
+
+   // Return a copy of the object only containing the whitelisted properties.
+    function pick(obj,prop1,prop2) {
+        if (!obj) {
+            return null;
+        }
+        var result = {};
+        for(var i=1;i<arguments.length;i++) {
+            var pn = arguments[i];
+            if (pn in obj) {
+                result[pn] = obj[pn];
+            }
+        }
+        return result;
+    }
+
     function removeItem(items, item) {
         if (isArray(items)) {
             var idx = items.indexOf(item);
@@ -1071,7 +1115,7 @@ define('skylark-langx/objects',[
 
     // Retrieve the values of an object's properties.
     function values(obj) {
-        var keys = _.keys(obj);
+        var keys = allKeys(obj);
         var length = keys.length;
         var values = Array(length);
         for (var i = 0; i < length; i++) {
@@ -1128,6 +1172,10 @@ define('skylark-langx/objects',[
         keys: keys,
 
         mixin: mixin,
+
+        omit: omit,
+
+        pick: pick,
 
         removeItem: removeItem,
 
@@ -2456,7 +2504,11 @@ define('skylark-langx/Evented',[
                 args = [e];
             }
             [e.type || e.name, "all"].forEach(function(eventName) {
-                var listeners = self._hub[eventName];
+                var parsed = parse(eventName),
+                    name = parsed.name,
+                    ns = parsed.ns;
+
+                var listeners = self._hub[name];
                 if (!listeners) {
                     return;
                 }
@@ -2466,6 +2518,9 @@ define('skylark-langx/Evented',[
 
                 for (var i = 0; i < len; i++) {
                     var listener = listeners[i];
+                    if (ns && (!listener.ns ||  !listener.ns.startsWith(ns))) {
+                        continue;
+                    }
                     if (e.data) {
                         if (listener.data) {
                             e.data = mixin({}, listener.data, e.data);
@@ -4592,15 +4647,15 @@ define('skylark-utils-dom/noder',[
             time = params.time,
             callback = params.callback,
             timer,
+
             throbber = this.createElement("div", {
-                className: params.className || "throbber",
-                style: style
+                "class": params.className || "throbber"
             }),
             _overlay = overlay(throbber, {
-                className: 'overlay fade'
+                "class": 'overlay fade'
             }),
             throb = this.createElement("div", {
-                className: "throb"
+                "class": "throb"
             }),
             textNode = this.createTextNode(text || ""),
             remove = function() {
@@ -4618,6 +4673,9 @@ define('skylark-utils-dom/noder',[
                     textNode.nodeValue = params.text;
                 }
             };
+        if (params.style) {
+            styler.css(throbber,params.style);
+        }
         throb.appendChild(textNode);
         throbber.appendChild(throb);
         elm.appendChild(throbber);
@@ -6188,7 +6246,7 @@ define('skylark-utils-dom/datax',[
 
     return dom.datax = datax;
 });
-define('skylark-ui-contents/contents',[
+define('skylark-domx-contents/contents',[
     "skylark-langx/skylark",
     "skylark-langx/langx",
     "skylark-utils-dom/noder",
@@ -6204,14 +6262,14 @@ define('skylark-ui-contents/contents',[
     return skylark.attach("ui.contents",contents);
 
 });
-define('skylark-ui-contents/main',[
+define('skylark-domx-contents/main',[
 	"./contents",
 	""
 ],function(contents){
 
 	return contents;
 });
-define('skylark-ui-contents', ['skylark-ui-contents/main'], function (main) { return main; });
+define('skylark-domx-contents', ['skylark-domx-contents/main'], function (main) { return main; });
 
 
 },this);
