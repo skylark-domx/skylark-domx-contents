@@ -99,7 +99,7 @@ define('skylark-domx-contents/contents',[
     };
 
 
-    return skylark.attach("ui.contents",contents);
+    return skylark.attach("domx.contents",contents);
 
 });
 define('skylark-domx-contents/main',[

@@ -11,6 +11,6 @@ define([
     };
 
 
-    return skylark.attach("ui.contents",contents);
+    return skylark.attach("domx.contents",contents);
 
 });
