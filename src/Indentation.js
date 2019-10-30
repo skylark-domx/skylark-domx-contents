@@ -1,7 +1,7 @@
 define([
   "skylark-langx/langx",
-  "skylark-utils-dom/noder",
-  "skylark-utils-dom/query",
+  "skylark-domx-noder",
+  "skylark-domx-query",
   "./contents"
 ],function(langx,noder,$,contents){ 
 
@@ -19,14 +19,14 @@ define([
    
   };
 
-  Indentation.prototype.init = function(editor,opts) {
-    this.editor = editor; // this._module;
+  Indentation.prototype.init = function(editable,opts) {
+    this.editable = editable; // this._module;
     this.opts = langx.extend({}, this.opts, opts);
 
-    this.editor.keystroke.add('tab', '*', (function(_this) {
+    this.editable.keystroke.add('tab', '*', (function(_this) {
       return function(e) {
         var codeButton;
-        codeButton = _this.editor.toolbar.findButton('code');
+        codeButton = _this.editable.toolbar.findButton('code');
         if (!(_this.opts.tabIndent || (codeButton && codeButton.active))) {
           return;
         }
@@ -37,9 +37,9 @@ define([
 
   Indentation.prototype.indent = function(isBackward) {
     var $blockNodes, $endNodes, $startNodes, nodes, result;
-    $startNodes = this.editor.selection.startNodes();
-    $endNodes = this.editor.selection.endNodes();
-    $blockNodes = this.editor.selection.blockNodes();
+    $startNodes = this.editable.selection.startNodes();
+    $endNodes = this.editable.selection.endNodes();
+    $blockNodes = this.editable.selection.blockNodes();
     nodes = [];
     $blockNodes = $blockNodes.each(function(i, node) {
       var include, j, k, len, n;
@@ -80,17 +80,17 @@ define([
       return;
     }
     if ($blockEl.is('pre')) {
-      $pre = this.editor.selection.containerNode();
+      $pre = this.editable.selection.containerNode();
       if (!($pre.is($blockEl) || $pre.closest('pre').is($blockEl))) {
         return;
       }
-      this.indentText(this.editor.selection.range());
+      this.indentText(this.editable.selection.range());
     } else if ($blockEl.is('li')) {
       $parentLi = $blockEl.prev('li');
       if ($parentLi.length < 1) {
         return;
       }
-      this.editor.selection.save();
+      this.editable.selection.save();
       tagName = $blockEl.parent()[0].tagName;
       $childList = $parentLi.children('ul, ol');
       if ($childList.length > 0) {
@@ -98,13 +98,13 @@ define([
       } else {
         $('<' + tagName + '/>').append($blockEl).appendTo($parentLi);
       }
-      this.editor.selection.restore();
+      this.editable.selection.restore();
     } else if ($blockEl.is('p, h1, h2, h3, h4')) {
       marginLeft = parseInt($blockEl.css('margin-left')) || 0;
       marginLeft = (Math.round(marginLeft / this.opts.indentWidth) + 1) * this.opts.indentWidth;
       $blockEl.css('margin-left', marginLeft);
     } else if ($blockEl.is('table') || $blockEl.is('.' + this.opts.classPrefix +'table')) {
-      $td = this.editor.selection.containerNode().closest('td, th');
+      $td = this.editable.selection.containerNode().closest('td, th');
       $nextTd = $td.next('td, th');
       if (!($nextTd.length > 0)) {
         $tr = $td.parent('tr');
@@ -117,7 +117,7 @@ define([
       if (!($td.length > 0 && $nextTd.length > 0)) {
         return;
       }
-      this.editor.selection.setRangeAtEndOf($nextTd);
+      this.editable.selection.setRangeAtEndOf($nextTd);
     } else {
       return false;
     }
@@ -132,9 +132,9 @@ define([
     range.insertNode(textNode);
     if (text) {
       range.selectNode(textNode);
-      return this.editor.selection.range(range);
+      return this.editable.selection.range(range);
     } else {
-      return this.editor.selection.setRangeAfter(textNode);
+      return this.editable.selection.setRangeAfter(textNode);
     }
   };
 
@@ -145,7 +145,7 @@ define([
       return;
     }
     if ($blockEl.is('pre')) {
-      $pre = this.editor.selection.containerNode();
+      $pre = this.editable.selection.containerNode();
       if (!($pre.is($blockEl) || $pre.closest('pre').is($blockEl))) {
         return;
       }
@@ -153,7 +153,7 @@ define([
     } else if ($blockEl.is('li')) {
       $parent = $blockEl.parent();
       $parentLi = $parent.parent('li');
-      this.editor.selection.save();
+      this.editable.selection.save();
       if ($parentLi.length < 1) {
         range = document.createRange();
         range.setStartBefore($parent[0]);
@@ -170,13 +170,13 @@ define([
           $parent.remove();
         }
       }
-      this.editor.selection.restore();
+      this.editable.selection.restore();
     } else if ($blockEl.is('p, h1, h2, h3, h4')) {
       marginLeft = parseInt($blockEl.css('margin-left')) || 0;
       marginLeft = Math.max(Math.round(marginLeft / this.opts.indentWidth) - 1, 0) * this.opts.indentWidth;
       $blockEl.css('margin-left', marginLeft === 0 ? '' : marginLeft);
     } else if ($blockEl.is('table') || $blockEl.is('.' + this.opts.classPrefix + 'table')) {
-      $td = this.editor.selection.containerNode().closest('td, th');
+      $td = this.editable.selection.containerNode().closest('td, th');
       $prevTd = $td.prev('td, th');
       if (!($prevTd.length > 0)) {
         $tr = $td.parent('tr');
@@ -189,7 +189,7 @@ define([
       if (!($td.length > 0 && $prevTd.length > 0)) {
         return;
       }
-      this.editor.selection.setRangeAtEndOf($prevTd);
+      this.editable.selection.setRangeAtEndOf($prevTd);
     } else {
       return false;
     }

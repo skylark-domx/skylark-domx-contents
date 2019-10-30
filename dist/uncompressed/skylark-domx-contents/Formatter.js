@@ -1,6 +1,6 @@
 define([
   "skylark-langx/langx",
-  "skylark-utils-dom/query",
+  "skylark-domx-query",
   "./contents"
 ],function(langx,$,contents){ 
 
@@ -14,8 +14,8 @@ define([
       allowedStyles: {}
     },
 
-    init : function(editor,opts) {
-      this.editor = editor; //this._module;
+    init : function(editable,opts) {
+      this.editable = editable; //this._module;
       this.opts = langx.extend({}, this.opts, opts);
 
       this._allowedTags = langx.merge(['br', 'span', 'a', 'img', 'b', 'strong', 'i', 'strike', 'u', 'font', 'p', 'ul', 'ol', 'li', 'blockquote', 'pre', 'code', 'h1', 'h2', 'h3', 'h4', 'hr'], this.opts.allowedTags);
@@ -38,31 +38,31 @@ define([
         h3: ['margin-left', 'text-align'],
         h4: ['margin-left', 'text-align']
       }, this.opts.allowedStyles);
-      this.editor.body.on('click', 'a', function(e) {
+      this.editable.body.on('click', 'a', function(e) {
         return false;
       });
     },
 
     decorate : function($el) {
       if ($el == null) {
-        $el = this.editor.body;
+        $el = this.editable.body;
       }
-      this.editor.trigger('decorate', [$el]);
+      this.editable.trigger('decorate', [$el]);
       return $el;
     },
 
     undecorate : function($el) {
       if ($el == null) {
-        $el = this.editor.body.clone();
+        $el = this.editable.body.clone();
       }
-      this.editor.trigger('undecorate', [$el]);
+      this.editable.trigger('undecorate', [$el]);
       return $el;
     },
 
     autolink : function($el) {
       var $link, $node, findLinkNode, k, lastIndex, len, linkNodes, match, re, replaceEls, subStr, text, uri;
       if ($el == null) {
-        $el = this.editor.body;
+        $el = this.editable.body;
       }
       linkNodes = [];
       findLinkNode = function($parentNode) {
@@ -104,10 +104,10 @@ define([
     format : function($el) {
       var $node, blockNode, k, l, len, len1, n, node, ref, ref1;
       if ($el == null) {
-        $el = this.editor.body;
+        $el = this.editable.body;
       }
       if ($el.is(':empty')) {
-        $el.append('<p>' + this.editor.util.phBr + '</p>');
+        $el.append('<p>' + this.editable.util.phBr + '</p>');
         return $el;
       }
       ref = $el.contents();
@@ -124,7 +124,7 @@ define([
             blockNode = null;
           }
           $node.remove();
-        } else if (this.editor.util.isBlockNode(node)) {
+        } else if (this.editable.util.isBlockNode(node)) {
           if ($node.is('li')) {
             if (blockNode && blockNode.is('ul, ol')) {
               blockNode.append(node);
@@ -140,8 +140,8 @@ define([
             blockNode = $('<p/>').insertBefore(node);
           }
           blockNode.append(node);
-          if (this.editor.util.isEmptyNode(blockNode)) {
-            blockNode.append(this.editor.util.phBr);
+          if (this.editable.util.isEmptyNode(blockNode)) {
+            blockNode.append(this.editable.util.phBr);
           }
         }
       }
@@ -165,14 +165,14 @@ define([
         return;
       }
       contents = $node.is('iframe') ? null : $node.contents();
-      isDecoration = this.editor.util.isDecoratedNode($node);
+      isDecoration = this.editable.util.isDecoratedNode($node);
       if ($node.is(this._allowedTags.join(',')) || isDecoration) {
         if ($node.is('a') && ($childImg = $node.find('img')).length > 0) {
           $node.replaceWith($childImg);
           $node = $childImg;
           contents = null;
         }
-        if ($node.is('td') && ($blockEls = $node.find(this.editor.util.blockNodes.join(','))).length > 0) {
+        if ($node.is('td') && ($blockEls = $node.find(this.editable.util.blockNodes.join(','))).length > 0) {
           $blockEls.each((function(_this) {
             return function(i, blockEl) {
               return $(blockEl).contents().unwrap();

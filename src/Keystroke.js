@@ -1,14 +1,12 @@
 define([
   "skylark-langx/langx",
-  "skylark-utils-dom/query",
+  "skylark-domx-query",
   "./contents"
 ],function(langx,$,contents){ 
 
-
-
   var Keystroke = langx.Evented.inherit({
-    init : function(editor,opts) {
-      this.editor = editor; //this._module;
+    init : function(editable,opts) {
+      this.editable = editable; //this._module;
       this.opts = langx.extend({}, this.opts, opts);
 
       this._keystrokeHandlers = {};
@@ -20,10 +18,9 @@ define([
   Keystroke.pluginName = 'Keystroke';
 
 
-
   Keystroke.prototype.add = function(key, node, handler) {
     key = key.toLowerCase();
-    key = this.editor.hotkeys.constructor.aliases[key] || key;
+    key = this.editable.hotkeys.constructor.aliases[key] || key;
     if (!this._keystrokeHandlers[key]) {
       this._keystrokeHandlers[key] = {};
     }
@@ -32,14 +29,14 @@ define([
 
   Keystroke.prototype.respondTo = function(e) {
     var base, key, ref, result;
-    key = (ref = this.editor.hotkeys.constructor.keyNameMap[e.which]) != null ? ref.toLowerCase() : void 0;
+    key = (ref = this.editable.hotkeys.constructor.keyNameMap[e.which]) != null ? ref.toLowerCase() : void 0;
     if (!key) {
       return;
     }
     if (key in this._keystrokeHandlers) {
       result = typeof (base = this._keystrokeHandlers[key])['*'] === "function" ? base['*'](e) : void 0;
       if (!result) {
-        this.editor.selection.startNodes().each((function(_this) {
+        this.editable.selection.startNodes().each((function(_this) {
           return function(i, node) {
             var handler, ref1;
             if (node.nodeType !== Node.ELEMENT_NODE) {
@@ -61,38 +58,38 @@ define([
 
   Keystroke.prototype._initKeystrokeHandlers = function() {
     var titleEnterHandler;
-    if (this.editor.util.browser.safari) {
+    if (this.editable.util.browser.safari) {
       this.add('enter', '*', (function(_this) {
         return function(e) {
           var $blockEl, $br;
           if (!e.shiftKey) {
             return;
           }
-          $blockEl = _this.editor.selection.blockNodes().last();
+          $blockEl = _this.editable.selection.blockNodes().last();
           if ($blockEl.is('pre')) {
             return;
           }
           $br = $('<br/>');
-          if (_this.editor.selection.rangeAtEndOf($blockEl)) {
-            _this.editor.selection.insertNode($br);
-            _this.editor.selection.insertNode($('<br/>'));
-            _this.editor.selection.setRangeBefore($br);
+          if (_this.editable.selection.rangeAtEndOf($blockEl)) {
+            _this.editable.selection.insertNode($br);
+            _this.editable.selection.insertNode($('<br/>'));
+            _this.editable.selection.setRangeBefore($br);
           } else {
-            _this.editor.selection.insertNode($br);
+            _this.editable.selection.insertNode($br);
           }
           return true;
         };
       })(this));
     }
-    if (this.editor.util.browser.webkit || this.editor.util.browser.msie) {
+    if (this.editable.util.browser.webkit || this.editable.util.browser.msie) {
       titleEnterHandler = (function(_this) {
         return function(e, $node) {
           var $p;
-          if (!_this.editor.selection.rangeAtEndOf($node)) {
+          if (!_this.editable.selection.rangeAtEndOf($node)) {
             return;
           }
-          $p = $('<p/>').append(_this.editor.util.phBr).insertAfter($node);
-          _this.editor.selection.setRangeAtStartOf($p);
+          $p = $('<p/>').append(_this.editable.util.phBr).insertAfter($node);
+          _this.editable.selection.setRangeAtStartOf($p);
           return true;
         };
       })(this);
@@ -106,30 +103,30 @@ define([
     this.add('backspace', '*', (function(_this) {
       return function(e) {
         var $blockEl, $prevBlockEl, $rootBlock, isWebkit;
-        $rootBlock = _this.editor.selection.rootNodes().first();
+        $rootBlock = _this.editable.selection.rootNodes().first();
         $prevBlockEl = $rootBlock.prev();
-        if ($prevBlockEl.is('hr') && _this.editor.selection.rangeAtStartOf($rootBlock)) {
-          _this.editor.selection.save();
+        if ($prevBlockEl.is('hr') && _this.editable.selection.rangeAtStartOf($rootBlock)) {
+          _this.editable.selection.save();
           $prevBlockEl.remove();
-          _this.editor.selection.restore();
+          _this.editable.selection.restore();
           return true;
         }
-        $blockEl = _this.editor.selection.blockNodes().last();
+        $blockEl = _this.editable.selection.blockNodes().last();
         if ($blockEl.is('.' + this.opts.classPrefix + 'resize-handle') && $rootBlock.is('.' + this.opts.classPrefix + 'table')) {
           e.preventDefault();
           $rootBlock.remove();
-          _this.editor.selection.setRangeAtEndOf($prevBlockEl);
+          _this.editable.selection.setRangeAtEndOf($prevBlockEl);
         }
-        if ($prevBlockEl.is('.' + this.opts.classPrefix + 'table') && !$blockEl.is('table') && _this.editor.util.isEmptyNode($blockEl)) {
+        if ($prevBlockEl.is('.' + this.opts.classPrefix + 'table') && !$blockEl.is('table') && _this.editable.util.isEmptyNode($blockEl)) {
           e.preventDefault();
           $blockEl.remove();
-          _this.editor.selection.setRangeAtEndOf($prevBlockEl);
+          _this.editable.selection.setRangeAtEndOf($prevBlockEl);
         }
-        isWebkit = _this.editor.util.browser.webkit;
-        if (isWebkit && _this.editor.selection.rangeAtStartOf($blockEl)) {
-          _this.editor.selection.save();
-          _this.editor.formatter.cleanNode($blockEl, true);
-          _this.editor.selection.restore();
+        isWebkit = _this.editable.util.browser.webkit;
+        if (isWebkit && _this.editable.selection.rangeAtStartOf($blockEl)) {
+          _this.editable.selection.save();
+          _this.editable.formatter.cleanNode($blockEl, true);
+          _this.editable.selection.restore();
           return null;
         }
       };
@@ -138,11 +135,11 @@ define([
       return function(e, $node) {
         var $blockEl, $p;
         if ($node.is('.' + this.opts.classPrefix + 'table')) {
-          $blockEl = _this.editor.selection.blockNodes().last();
+          $blockEl = _this.editable.selection.blockNodes().last();
           if ($blockEl.is('.' + this.opts.classPrefix + 'resize-handle')) {
             e.preventDefault();
-            $p = $('<p/>').append(_this.editor.util.phBr).insertAfter($node);
-            return _this.editor.selection.setRangeAtStartOf($p);
+            $p = $('<p/>').append(_this.editable.util.phBr).insertAfter($node);
+            return _this.editable.selection.setRangeAtStartOf($p);
           }
         }
       };
@@ -152,20 +149,20 @@ define([
         var $cloneNode, listEl, newBlockEl, newListEl;
         $cloneNode = $node.clone();
         $cloneNode.find('ul, ol').remove();
-        if (!(_this.editor.util.isEmptyNode($cloneNode) && $node.is(_this.editor.selection.blockNodes().last()))) {
+        if (!(_this.editable.util.isEmptyNode($cloneNode) && $node.is(_this.editable.selection.blockNodes().last()))) {
           return;
         }
         listEl = $node.parent();  
         if ($node.next('li').length > 0) {
-          if (!_this.editor.util.isEmptyNode($node)) {
+          if (!_this.editable.util.isEmptyNode($node)) {
             return;
           }
           if (listEl.parent('li').length > 0) {
-            newBlockEl = $('<li/>').append(_this.editor.util.phBr).insertAfter(listEl.parent('li'));
+            newBlockEl = $('<li/>').append(_this.editable.util.phBr).insertAfter(listEl.parent('li'));
             newListEl = $('<' + listEl[0].tagName + '/>').append($node.nextAll('li'));
             newBlockEl.append(newListEl);
           } else {
-            newBlockEl = $('<p/>').append(_this.editor.util.phBr).insertAfter(listEl);
+            newBlockEl = $('<p/>').append(_this.editable.util.phBr).insertAfter(listEl);
             newListEl = $('<' + listEl[0].tagName + '/>').append($node.nextAll('li'));
             newBlockEl.after(newListEl);
           }
@@ -175,10 +172,10 @@ define([
             if ($node.contents().length > 0) {
               newBlockEl.append($node.contents());
             } else {
-              newBlockEl.append(_this.editor.util.phBr);
+              newBlockEl.append(_this.editable.util.phBr);
             }
           } else {
-            newBlockEl = $('<p/>').append(_this.editor.util.phBr).insertAfter(listEl);
+            newBlockEl = $('<p/>').append(_this.editable.util.phBr).insertAfter(listEl);
             if ($node.children('ul, ol').length > 0) {
               newBlockEl.after($node.children('ul, ol'));
             }
@@ -193,7 +190,7 @@ define([
             listEl.remove();
           }
         }
-        _this.editor.selection.setRangeAtStartOf(newBlockEl);
+        _this.editable.selection.setRangeAtStartOf(newBlockEl);
         return true;
       };
     })(this));
@@ -202,14 +199,14 @@ define([
         var $p, breakNode, range;
         e.preventDefault();
         if (e.shiftKey) {
-          $p = $('<p/>').append(_this.editor.util.phBr).insertAfter($node);
-          _this.editor.selection.setRangeAtStartOf($p);
+          $p = $('<p/>').append(_this.editable.util.phBr).insertAfter($node);
+          _this.editable.selection.setRangeAtStartOf($p);
           return true;
         }
-        range = _this.editor.selection.range();
+        range = _this.editable.selection.range();
         breakNode = null;
         range.deleteContents();
-        if (!_this.editor.util.browser.msie && _this.editor.selection.rangeAtEndOf($node)) {
+        if (!_this.editable.util.browser.msie && _this.editable.selection.rangeAtEndOf($node)) {
           breakNode = document.createTextNode('\n\n');
         } else {
           breakNode = document.createTextNode('\n');
@@ -217,20 +214,20 @@ define([
         range.insertNode(breakNode);
         range.setEnd(breakNode, 1);
         range.collapse(false);
-        _this.editor.selection.range(range);
+        _this.editable.selection.range(range);
         return true;
       };
     })(this));
     this.add('enter', 'blockquote', (function(_this) {
       return function(e, $node) {
         var $closestBlock, range;
-        $closestBlock = _this.editor.selection.blockNodes().last();
-        if (!($closestBlock.is('p') && !$closestBlock.next().length && _this.editor.util.isEmptyNode($closestBlock))) {
+        $closestBlock = _this.editable.selection.blockNodes().last();
+        if (!($closestBlock.is('p') && !$closestBlock.next().length && _this.editable.util.isEmptyNode($closestBlock))) {
           return;
         }
         $node.after($closestBlock);
         range = document.createRange();
-        _this.editor.selection.setRangeAtStartOf($closestBlock, range);
+        _this.editable.selection.setRangeAtStartOf($closestBlock, range);
         return true;
       };
     })(this));
@@ -258,11 +255,11 @@ define([
           }
           return $textNode = $(n);
         });
-        isFF = _this.editor.util.browser.firefox && !$textNode.next('br').length;
+        isFF = _this.editable.util.browser.firefox && !$textNode.next('br').length;
         if ($textNode && text.length === 1 && isFF) {
-          $br = $(_this.editor.util.phBr).insertAfter($textNode);
+          $br = $(_this.editable.util.phBr).insertAfter($textNode);
           $textNode.remove();
-          _this.editor.selection.setRangeBefore($br);
+          _this.editable.selection.setRangeBefore($br);
           return true;
         } else if (text.length > 0) {
           return false;
@@ -270,15 +267,15 @@ define([
         range = document.createRange();
         $prevChildList = $prevNode.children('ul, ol');
         if ($prevChildList.length > 0) {
-          $newLi = $('<li/>').append(_this.editor.util.phBr).appendTo($prevChildList);
+          $newLi = $('<li/>').append(_this.editable.util.phBr).appendTo($prevChildList);
           $prevChildList.append($childList.children('li'));
           $node.remove();
-          _this.editor.selection.setRangeAtEndOf($newLi, range);
+          _this.editable.selection.setRangeAtEndOf($newLi, range);
         } else {
-          _this.editor.selection.setRangeAtEndOf($prevNode, range);
+          _this.editable.selection.setRangeAtEndOf($prevNode, range);
           $prevNode.append($childList);
           $node.remove();
-          _this.editor.selection.range(range);
+          _this.editable.selection.range(range);
         }
         return true;
       };
@@ -286,26 +283,26 @@ define([
     this.add('backspace', 'pre', (function(_this) {
       return function(e, $node) {
         var $newNode, codeStr, range;
-        if (!_this.editor.selection.rangeAtStartOf($node)) {
+        if (!_this.editable.selection.rangeAtStartOf($node)) {
           return;
         }
-        codeStr = $node.html().replace('\n', '<br/>') || _this.editor.util.phBr;
+        codeStr = $node.html().replace('\n', '<br/>') || _this.editable.util.phBr;
         $newNode = $('<p/>').append(codeStr).insertAfter($node);
         $node.remove();
         range = document.createRange();
-        _this.editor.selection.setRangeAtStartOf($newNode, range);
+        _this.editable.selection.setRangeAtStartOf($newNode, range);
         return true;
       };
     })(this));
     return this.add('backspace', 'blockquote', (function(_this) {
       return function(e, $node) {
         var $firstChild, range;
-        if (!_this.editor.selection.rangeAtStartOf($node)) {
+        if (!_this.editable.selection.rangeAtStartOf($node)) {
           return;
         }
         $firstChild = $node.children().first().unwrap();
         range = document.createRange();
-        _this.editor.selection.setRangeAtStartOf($firstChild, range);
+        _this.editable.selection.setRangeAtStartOf($firstChild, range);
         return true;
       };
     })(this));

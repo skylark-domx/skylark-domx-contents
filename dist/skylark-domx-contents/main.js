@@ -5,5 +5,5 @@
  * @link www.skylarkjs.org
  * @license MIT
  */
-define(["./contents",""],function(n){return n});
+define(["./contents","./Editable"],function(n){return n});
 //# sourceMappingURL=sourcemaps/main.js.map

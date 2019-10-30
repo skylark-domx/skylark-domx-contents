@@ -1,6 +1,6 @@
 define([
   "skylark-langx/langx",
-  "skylark-utils-dom/query",
+  "skylark-domx-query",
   "./contents"
 ],function(langx,$,contents){ 
 
@@ -211,9 +211,7 @@ define([
     return this;
   };
 
-  return  contents.hotkeys = function(opts) {
-    return new Hotkeys(opts);
-  };
+  return  contents.Hotkeys = Hotkeys;
 
 });
 

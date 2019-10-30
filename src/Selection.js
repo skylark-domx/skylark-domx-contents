@@ -1,7 +1,7 @@
 define([
   "skylark-langx/langx",
-  "skylark-utils-dom/noder",
-  "skylark-utils-dom/query",
+  "skylark-domx-noder",
+  "skylark-domx-query",
   "./contents"
 ],function(langx,noder,$,contents){ 
 
@@ -20,23 +20,23 @@ define([
 
     _rootNodes : null,
 
-    init : function(editor,opts) {
+    init : function(editable,opts) {
       var self = this;
-      this.editor = editor; //this._module;
+      this.editable = editable; //this._module;
       this.opts = langx.extend({}, this.opts, opts);
       this._selection = document.getSelection();
 
-      this.editor.on('selectionchanged', function(e) {
+      this.editable.on('selectionchanged', function(e) {
         console.log("selectionchanged");
         self.reset();
         return self._range = self._selection.getRangeAt(0);
       });
 
-      this.editor.on('blur', function(e) {
+      this.editable.on('blur', function(e) {
         return self.reset();
       });
 
-      this.editor.on('focus', function(e) {
+      this.editable.on('focus', function(e) {
         self.reset();
         return self._range = self._selection.getRangeAt(0);
       });
@@ -70,12 +70,12 @@ define([
         this.clear();
         this._selection.addRange(range);
         this._range = range;
- //       ffOrIE = this.editor.util.browser.firefox || this.editor.util.browser.msie;
+ //       ffOrIE = this.editable.util.browser.firefox || this.editable.util.browser.msie;
         ffOrIE = langx.hoster.browser.mozilla || langx.hoster.browser.msie;
-        if (!this.editor.inputManager.focused && ffOrIE) {
-          this.editor.body.focus();
+        if (!this.editable.inputManager.focused && ffOrIE) {
+          this.editable.body.focus();
         }
-      } else if (!this._range && this.editor.inputManager.focused && this._selection.rangeCount) {
+      } else if (!this._range && this.editable.inputManager.focused && this._selection.rangeCount) {
         this._range = this._selection.getRangeAt(0);
       }
       return this._range;
@@ -87,7 +87,7 @@ define([
           this._startNodes = (function(self) {
             return function() {
               var startNodes;
-              startNodes = $(self._range.startContainer).parentsUntil(self.editor.body).get();
+              startNodes = $(self._range.startContainer).parentsUntil(self.editable.body).get();
               startNodes.unshift(self._range.startContainer);
               return $(startNodes);
             };
@@ -101,7 +101,7 @@ define([
     endNodes : function() {
       var endNodes;
       if (this._range) {
-        this._endNodes || (this._endNodes = this._range.collapsed ? this.startNodes() : (endNodes = $(this._range.endContainer).parentsUntil(this.editor.body).get(), endNodes.unshift(this._range.endContainer), $(endNodes)));
+        this._endNodes || (this._endNodes = this._range.collapsed ? this.startNodes() : (endNodes = $(this._range.endContainer).parentsUntil(this.editable.body).get(), endNodes.unshift(this._range.endContainer), $(endNodes)));
       }
       return this._endNodes;
     },
@@ -127,7 +127,7 @@ define([
                 $node = $(node);
                 if (self.endNodes().index($node) > -1) {
                   return nodes.push(node);
-                } else if ($node.parent().is(self.editor.body) || (sharedIndex = self.endNodes().index($node.parent())) > -1) {
+                } else if ($node.parent().is(self.editable.body) || (sharedIndex = self.endNodes().index($node.parent())) > -1) {
                   if (sharedIndex && sharedIndex > -1) {
                     $endNode = self.endNodes().eq(sharedIndex - 1);
                   } else {
@@ -146,7 +146,7 @@ define([
               self.endNodes().each(function(i, node) {
                 var $node, $nodes, index;
                 $node = $(node);
-                if ($node.parent().is(self.editor.body) || self.startNodes().index($node.parent()) > -1) {
+                if ($node.parent().is(self.editable.body) || self.startNodes().index($node.parent()) > -1) {
                   nodes.push(node);
                   return false;
                 } else {
@@ -171,7 +171,7 @@ define([
       this._blockNodes || (this._blockNodes = (function(self) {
         return function() {
           return self.nodes().filter(function(i, node) {
-            return self.editor.util.isBlockNode(node);
+            return self.editable.util.isBlockNode(node);
           });
         };
       })(this)());
@@ -188,7 +188,7 @@ define([
           return self.nodes().filter(function(i, node) {
             var $parent;
             $parent = $(node).parent();
-            return $parent.is(self.editor.body) || $parent.is('blockquote');
+            return $parent.is(self.editable.body) || $parent.is('blockquote');
           });
         };
       })(this)());
@@ -206,7 +206,7 @@ define([
       }
       node = $(node)[0];
       endNode = range.endContainer;
-      endNodeLength = this.editor.util.getNodeLength(endNode);
+      endNodeLength = this.editable.util.getNodeLength(endNode);
       beforeLastNode = range.endOffset === endNodeLength - 1;
       lastNodeIsBr = $(endNode).contents().last().is('br');
       afterLastNode = range.endOffset === endNodeLength;
@@ -329,7 +329,7 @@ define([
         if (contents.length > 0) {
           lastChild = contents.last();
           lastText = lastChild.text();
-          lastChildLength = this.editor.util.getNodeLength(lastChild[0]);
+          lastChildLength = this.editable.util.getNodeLength(lastChild[0]);
           if (lastText.charAt(lastText.length - 1) === '\n') {
             range.setEnd(lastChild[0], lastChildLength - 1);
           } else {
@@ -339,13 +339,13 @@ define([
           range.setEnd(node, 0);
         }
       } else {
-        nodeLength = this.editor.util.getNodeLength(node);
+        nodeLength = this.editable.util.getNodeLength(node);
         if (node.nodeType !== 3 && nodeLength > 0) {
           $lastNode = $(node).contents().last();
           if ($lastNode.is('br')) {
             nodeLength -= 1;
-          } else if ($lastNode[0].nodeType !== 3 && this.editor.util.isEmptyNode($lastNode)) {
-            $lastNode.append(this.editor.util.phBr);
+          } else if ($lastNode[0].nodeType !== 3 && this.editable.util.isEmptyNode($lastNode)) {
+            $lastNode.append(this.editable.util.phBr);
             node = $lastNode[0];
             nodeLength = 0;
           }
@@ -365,11 +365,11 @@ define([
       endRange = range.cloneRange();
       startRange.collapse(true);
       endRange.collapse(false);
-      atStartOfBody = this.rangeAtStartOf(this.editor.body, startRange);
-      atEndOfBody = this.rangeAtEndOf(this.editor.body, endRange);
+      atStartOfBody = this.rangeAtStartOf(this.editable.body, startRange);
+      atEndOfBody = this.rangeAtEndOf(this.editable.body, endRange);
       if (!range.collapsed && atStartOfBody && atEndOfBody) {
-        this.editor.body.empty();
-        range.setStart(this.editor.body[0], 0);
+        this.editable.body.empty();
+        range.setStart(this.editable.body[0], 0);
         range.collapse(true);
         this.range(range);
       } else {
@@ -417,8 +417,8 @@ define([
       if (!this._selectionSaved) {
         return false;
       }
-      startCaret = this.editor.body.find('.' + this.opts.classPrefix +'caret-start');
-      endCaret = this.editor.body.find('.' + this.opts.classPrefix +'caret-end');
+      startCaret = this.editable.body.find('.' + this.opts.classPrefix +'caret-start');
+      endCaret = this.editable.body.find('.' + this.opts.classPrefix +'caret-end');
       if (startCaret.length && endCaret.length) {
         startContainer = startCaret.parent();
         startOffset = startContainer.contents().index(startCaret);

@@ -1,46 +1,46 @@
 define([
   "skylark-langx/langx",
-  "skylark-utils-dom/query",
+  "skylark-domx-query",
   "./contents"
 ],function(langx,$,contents){ 
 
   var UndoManager = langx.Evented.inherit({
-    init : function(editor,opts) {
-      this.editor = editor;
+    init : function(editable,opts) {
+      this.editable = editable;
       this.opts = langx.extend({}, this.opts, opts);
 
       var redoShortcut, undoShortcut;
       this._stack = [];
-      if (this.editor.util.os.mac) {
+      if (this.editable.util.os.mac) {
         undoShortcut = 'cmd+z';
         redoShortcut = 'shift+cmd+z';
-      } else if (this.editor.util.os.win) {
+      } else if (this.editable.util.os.win) {
         undoShortcut = 'ctrl+z';
         redoShortcut = 'ctrl+y';
       } else {
         undoShortcut = 'ctrl+z';
         redoShortcut = 'shift+ctrl+z';
       }
-      this.editor.hotkeys.add(undoShortcut, (function(_this) {
+      this.editable.hotkeys.add(undoShortcut, (function(_this) {
         return function(e) {
           e.preventDefault();
           _this.undo();
           return false;
         };
       })(this));
-      this.editor.hotkeys.add(redoShortcut, (function(_this) {
+      this.editable.hotkeys.add(redoShortcut, (function(_this) {
         return function(e) {
           e.preventDefault();
           _this.redo();
           return false;
         };
       })(this));
-      this.throttledPushState = this.editor.util.throttle((function(_this) {
+      this.throttledPushState = this.editable.util.throttle((function(_this) {
         return function() {
           return _this._pushUndoState();
         };
       })(this), 2000);
-      this.editor.on('valuechanged', (function(_this) {
+      this.editable.on('valuechanged', (function(_this) {
         return function(e, src) {
           if (src === 'undo' || src === 'redo') {
             return;
@@ -48,20 +48,20 @@ define([
           return _this.throttledPushState();
         };
       })(this));
-      this.editor.on('selectionchanged', (function(_this) {
+      this.editable.on('selectionchanged', (function(_this) {
         return function(e) {
           _this.resetCaretPosition();
           return _this.update();
         };
       })(this));
-      this.editor.on('focus', (function(_this) {
+      this.editable.on('focus', (function(_this) {
         return function(e) {
           if (_this._stack.length === 0) {
             return _this._pushUndoState();
           }
         };
       })(this));
-      this.editor.on('blur', (function(_this) {
+      this.editable.on('blur', (function(_this) {
         return function(e) {
           return _this.resetCaretPosition();
         };
@@ -86,18 +86,18 @@ define([
   };
 
   UndoManager.prototype.startPosition = function() {
-    if (this.editor.selection._range) {
+    if (this.editable.selection._range) {
       this._startPosition || (this._startPosition = this._getPosition('start'));
     }
     return this._startPosition;
   };
 
   UndoManager.prototype.endPosition = function() {
-    if (this.editor.selection._range) {
+    if (this.editable.selection._range) {
       this._endPosition || (this._endPosition = (function(_this) {
         return function() {
           var range;
-          range = _this.editor.selection.range();
+          range = _this.editable.selection.range();
           if (range.collapsed) {
             return _this._startPosition;
           }
@@ -110,7 +110,7 @@ define([
 
   UndoManager.prototype._pushUndoState = function() {
     var caret;
-    if (this.editor.trigger('pushundostate') === false) {
+    if (this.editable.trigger('pushundostate') === false) {
       return;
     }
     caret = this.caretPosition();
@@ -120,7 +120,7 @@ define([
     this._index += 1;
     this._stack.length = this._index;
     this._stack.push({
-      html: this.editor.body.html(),
+      html: this.editable.body.html(),
       caret: this.caretPosition()
     });
     if (this._stack.length > this._capacity) {
@@ -142,14 +142,14 @@ define([
     if (this._index < 1 || this._stack.length < 2) {
       return;
     }
-    this.editor.hidePopover();
+    this.editable.hidePopover();
     this._index -= 1;
     state = this._stack[this._index];
-    this.editor.body.get(0).innerHTML = state.html;
+    this.editable.body.get(0).innerHTML = state.html;
     this.caretPosition(state.caret);
-    this.editor.body.find('.selected').removeClass('selected');
-    this.editor.sync();
-    return this.editor.trigger('valuechanged', ['undo']);
+    this.editable.body.find('.selected').removeClass('selected');
+    this.editable.sync();
+    return this.editable.trigger('valuechanged', ['undo']);
   };
 
   UndoManager.prototype.redo = function() {
@@ -157,14 +157,14 @@ define([
     if (this._index < 0 || this._stack.length < this._index + 2) {
       return;
     }
-    this.editor.hidePopover();
+    this.editable.hidePopover();
     this._index += 1;
     state = this._stack[this._index];
-    this.editor.body.get(0).innerHTML = state.html;
+    this.editable.body.get(0).innerHTML = state.html;
     this.caretPosition(state.caret);
-    this.editor.body.find('.selected').removeClass('selected');
-    this.editor.sync();
-    return this.editor.trigger('valuechanged', ['redo']);
+    this.editable.body.find('.selected').removeClass('selected');
+    this.editable.sync();
+    return this.editable.trigger('valuechanged', ['redo']);
   };
 
   UndoManager.prototype.update = function() {
@@ -173,7 +173,7 @@ define([
     if (!currentState) {
       return;
     }
-    currentState.html = this.editor.body.html();
+    currentState.html = this.editable.body.html();
     return currentState.caret = this.caretPosition();
   };
 
@@ -212,15 +212,15 @@ define([
     if (type == null) {
       type = 'start';
     }
-    range = this.editor.selection.range();
+    range = this.editable.selection.range();
     offset = range[type + "Offset"];
-    $nodes = this.editor.selection[type + "Nodes"]();
+    $nodes = this.editable.selection[type + "Nodes"]();
     node = $nodes.first()[0];
     if (node.nodeType === Node.TEXT_NODE) {
       prevNode = node.previousSibling;
       while (prevNode && prevNode.nodeType === Node.TEXT_NODE) {
         node = prevNode;
-        offset += this.editor.util.getNodeLength(prevNode);
+        offset += this.editable.util.getNodeLength(prevNode);
         prevNode = prevNode.previousSibling;
       }
       nodes = $nodes.get();
@@ -240,7 +240,7 @@ define([
 
   UndoManager.prototype._getNodeByPosition = function(position) {
     var child, childNodes, i, k, len, node, offset, ref;
-    node = this.editor.body[0];
+    node = this.editable.body[0];
     ref = position.slice(0, position.length - 1);
     for (i = k = 0, len = ref.length; k < len; i = ++k) {
       offset = ref[i];
@@ -263,8 +263,8 @@ define([
   UndoManager.prototype.caretPosition = function(caret) {
     var endContainer, endOffset, range, startContainer, startOffset;
     if (!caret) {
-      range = this.editor.selection.range();
-      caret = this.editor.inputManager.focused && (range != null) ? {
+      range = this.editable.selection.range();
+      caret = this.editable.inputManager.focused && (range != null) ? {
         start: this.startPosition(),
         end: this.endPosition(),
         collapsed: range.collapsed
@@ -294,7 +294,7 @@ define([
       range = document.createRange();
       range.setStart(startContainer, startOffset);
       range.setEnd(endContainer, endOffset);
-      return this.editor.selection.range(range);
+      return this.editable.selection.range(range);
     }
   };
 

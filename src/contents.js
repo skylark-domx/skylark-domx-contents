@@ -1,8 +1,8 @@
 define([
     "skylark-langx/skylark",
     "skylark-langx/langx",
-    "skylark-utils-dom/noder",
-    "skylark-utils-dom/datax"
+    "skylark-domx-noder",
+    "skylark-domx-data"
 ], function(skylark, langx, noder,datax) {
     "use strict";
 

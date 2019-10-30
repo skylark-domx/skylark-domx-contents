@@ -1,6 +1,6 @@
 define([
   "skylark-langx/langx",
-  "skylark-utils-dom/query",
+  "skylark-domx-query",
   "./contents"
 ],function(langx,$,contents){ 
 
@@ -16,7 +16,6 @@ define([
   });
 
   Util.pluginName = 'Util';
-
 
   Util.prototype.phBr = '<br/>';
 

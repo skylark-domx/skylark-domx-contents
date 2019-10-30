@@ -1,9 +1,9 @@
 define([
 	"skylark-langx/langx",
-	"skylark-utils-dom/noder",
-	"skylark-utils-dom/query",
+	"skylark-domx-noder",
+	"skylark-domx-query",
 	"./contents",
-	"./hotkeys",
+	"./Hotkeys",
 	"./Util",
 	"./InputManager", 
 	"./Selection", 
@@ -12,10 +12,10 @@ define([
 	"./Formatter", 
 	"./Indentation", 
 	"./Clipboard"
-],function(langx, noder, $, contents,hotkeys,Util,InputManager,Selection,UndoManager,Keystroke,Formatter,Indentation,Clipboard){
-  var Editor = langx.Evented.inherit({
+],function(langx, noder, $, contents,Hotkeys,Util,InputManager,Selection,UndoManager,Keystroke,Formatter,Indentation,Clipboard){
+  var Editable = langx.Evented.inherit({
     init : function(el,opts) {
-    	this.el = el;
+    	this.$el = $(el);
     	this.textarea = $(opts.textarea);
     	this.body = $(opts.body);
 
@@ -23,16 +23,12 @@ define([
     		classPrefix : opts.classPrefix
     	};
 
-      this.util = new Util(this,pluginOpts);
+        this.util = new Util(this,pluginOpts);
 
-      if (hotkeys) {
-        this.hotkeys = hotkeys({
-          el: this.body
-        });
-      } else {
-        throw new Error('simditor: simple-hotkeys is required.');
-        return;
-      }
+		this.hotkeys = new Hotkeys({
+		  el: this.body
+		});
+
       this.inputManager = new InputManager(this,pluginOpts);
       this.selection = new Selection(this,pluginOpts);
       this.undoManager = new UndoManager(this,pluginOpts);
@@ -42,12 +38,12 @@ define([
       this.clipboard = new Clipboard(this,pluginOpts);
 
 		if (this.util.os.mac) {
-		  this.el.addClass(opts.classPrefix + 'mac');
+		  this.$el.addClass(opts.classPrefix + 'mac');
 		} else if (this.util.os.linux) {
-		  this.el.addClass(opts.classPrefix + 'linux');
+		  this.$el.addClass(opts.classPrefix + 'linux');
 		}
 		if (this.util.os.mobile) {
-		  this.el.addClass(opts.classPrefix + 'mobile');
+		  this.$el.addClass(opts.classPrefix + 'mobile');
 		}
 
       if (this.util.browser.mozilla) {
@@ -103,7 +99,7 @@ define([
 	focus : function() {
 		var $blockEl, range;
 		if (!(this.body.is(':visible') && this.body.is('[contenteditable]'))) {
-		  this.el.find('textarea:visible').focus();
+		  this.$el.find('textarea:visible').focus();
 		  return;
 		}
 		if (this.inputManager.lastCaretPosition) {
@@ -448,7 +444,7 @@ define([
 	];
 
 	commands.forEach(function(cmd){
-		Editor.prototype[cmd] = function() {
+		Editable.prototype[cmd] = function() {
 	      document.execCommand(cmd,false,null);
 	      if (!this.util.support.oninput) {
 	        this.trigger('valuechanged');
@@ -472,11 +468,11 @@ define([
 			datax.attr(node,"contentEditable",value);
 		}
 		*/
-		return new Editor(el,opts);
+		return new Editable(el,opts);
 		
 	};
 
 
-	return contents.editable  = editable;
+	return contents.Editable  = Editable;
 	
 });
