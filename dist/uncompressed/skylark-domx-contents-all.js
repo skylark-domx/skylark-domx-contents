@@ -2527,7 +2527,7 @@ define('skylark-langx/Deferred',[
 ],function(Deferred){
     return Deferred;
 });
-define('skylark-langx-emitter/Evented',[
+define('skylark-langx-emitter/Emitter',[
   "skylark-langx-ns/ns",
   "skylark-langx-types",
   "skylark-langx-objects",
@@ -2541,7 +2541,8 @@ define('skylark-langx-emitter/Evented',[
         isFunction = types.isFunction,
         isString = types.isString,
         isEmptyObject = types.isEmptyObject,
-        mixin = objects.mixin;
+        mixin = objects.mixin,
+        safeMixin = objects.safeMixin;
 
     function parse(event) {
         var segs = ("" + event).split(".");
@@ -2551,7 +2552,7 @@ define('skylark-langx-emitter/Evented',[
         };
     }
 
-    var Evented = klass({
+    var Emitter = klass({
         on: function(events, selector, data, callback, ctx, /*used internally*/ one) {
             var self = this,
                 _hub = this._hub || (this._hub = {});
@@ -2603,7 +2604,7 @@ define('skylark-langx-emitter/Evented',[
             return this.on(events, selector, data, callback, ctx, 1);
         },
 
-        trigger: function(e /*,argument list*/ ) {
+        emit: function(e /*,argument list*/ ) {
             if (!this._hub) {
                 return this;
             }
@@ -2807,16 +2808,35 @@ define('skylark-langx-emitter/Evented',[
         }
     });
 
-    return skylark.attach("langx.Evented",Evented);
+    Emitter.prototype.trigger = Emitter.prototype.emit;
+
+    Emitter.createEvent = function (type,props) {
+        var e = new CustomEvent(type,props);
+        return safeMixin(e, props);
+    };
+
+    return skylark.attach("langx.Emitter",Emitter);
 
 });
+define('skylark-langx-emitter/Evented',[
+  "skylark-langx-ns/ns",
+	"./Emitter"
+],function(skylark,Emitter){
+	return skylark.attach("langx.Evented",Emitter);
+});
 define('skylark-langx-emitter/main',[
+	"./Emitter",
 	"./Evented"
-],function(Evented){
-	return Evented;
+],function(Emitter){
+	return Emitter;
 });
 define('skylark-langx-emitter', ['skylark-langx-emitter/main'], function (main) { return main; });
 
+define('skylark-langx/Emitter',[
+    "skylark-langx-emitter"
+],function(Evented){
+    return Evented;
+});
 define('skylark-langx/Evented',[
     "skylark-langx-emitter"
 ],function(Evented){
@@ -3499,6 +3519,7 @@ define('skylark-langx/langx',[
     "./async",
     "./datetimes",
     "./Deferred",
+    "./Emitter",
     "./Evented",
     "./funcs",
     "./hoster",
@@ -3509,7 +3530,7 @@ define('skylark-langx/langx',[
     "./strings",
     "./topic",
     "./types"
-], function(skylark,arrays,ArrayStore,aspect,async,datetimes,Deferred,Evented,funcs,hoster,klass,numbers,objects,tateful,strings,topic,types) {
+], function(skylark,arrays,ArrayStore,aspect,async,datetimes,Deferred,Emitter,Evented,funcs,hoster,klass,numbers,objects,Stateful,strings,topic,types) {
     "use strict";
     var toString = {}.toString,
         concat = Array.prototype.concat,
@@ -3520,13 +3541,6 @@ define('skylark-langx/langx',[
         safeMixin = objects.safeMixin,
         isFunction = types.isFunction;
 
-
-    function createEvent(type, props) {
-        var e = new CustomEvent(type, props);
-
-        return safeMixin(e, props);
-    }
-    
 
     function funcArg(context, arg, idx, payload) {
         return isFunction(arg) ? arg.call(context, idx, payload) : arg;
@@ -3565,7 +3579,7 @@ define('skylark-langx/langx',[
     }
 
     mixin(langx, {
-        createEvent : createEvent,
+        createEvent : Emitter.createEvent,
 
         funcArg: funcArg,
 
@@ -3587,14 +3601,14 @@ define('skylark-langx/langx',[
         
         Deferred: Deferred,
 
+        Emitter: Emitter,
+
         Evented: Evented,
 
         hoster : hoster,
 
         klass : klass,
-
-        Restful: Restful,
-        
+       
         Stateful: Stateful,
 
         topic : topic
@@ -6018,6 +6032,23 @@ define('skylark-domx-query/query',[
         dasherize = langx.dasherize,
         children = finder.children;
 
+    function wrapper_node_operation(func, context, oldValueFunc) {
+        return function(html) {
+            var argType, nodes = langx.map(arguments, function(arg) {
+                argType = type(arg)
+                return argType == "function" || argType == "object" || argType == "array" || arg == null ?
+                    arg : noder.createFragment(arg)
+            });
+            if (nodes.length < 1) {
+                return this
+            }
+            this.each(function(idx) {
+                func.apply(context, [this, nodes, idx > 0]);
+            });
+            return this;
+        }
+    }
+
     function wrapper_map(func, context) {
         return function() {
             var self = this,
@@ -6404,6 +6435,8 @@ define('skylark-domx-query/query',[
 
             empty: wrapper_every_act(noder.empty, noder),
 
+            html: wrapper_value(noder.html, noder),
+
             // `pluck` is borrowed from Prototype.js
             pluck: function(property) {
                 return langx.map(this, function(el) {
@@ -6518,23 +6551,6 @@ define('skylark-domx-query/query',[
 
 
         var traverseNode = noder.traverse;
-
-        function wrapper_node_operation(func, context, oldValueFunc) {
-            return function(html) {
-                var argType, nodes = langx.map(arguments, function(arg) {
-                    argType = type(arg)
-                    return argType == "function" || argType == "object" || argType == "array" || arg == null ?
-                        arg : noder.createFragment(arg)
-                });
-                if (nodes.length < 1) {
-                    return this
-                }
-                this.each(function(idx) {
-                    func.apply(context, [this, nodes, idx > 0]);
-                });
-                return this;
-            }
-        }
 
 
         $.fn.after = wrapper_node_operation(noder.after, noder);
@@ -6963,11 +6979,11 @@ define('skylark-domx-velm/main',[
 define('skylark-domx-velm', ['skylark-domx-velm/main'], function (main) { return main; });
 
 define('skylark-domx-data/main',[
-	"./data",
-	"skylark-domx-velm",
-	"skylark-domx-query"	
+    "./data",
+    "skylark-domx-velm",
+    "skylark-domx-query"    
 ],function(data,velm,$){
-    // from ./datax
+    // from ./data
     velm.delegate([
         "attr",
         "data",
@@ -6976,26 +6992,26 @@ define('skylark-domx-data/main',[
         "removeData",
         "text",
         "val"
-    ], datax);
+    ], data);
 
-    $.fn.text = $.wraps.wrapper_value(datax.text, datax, datax.text);
+    $.fn.text = $.wraps.wrapper_value(data.text, data, data.text);
 
-    $.fn.attr = $.wraps.wrapper_name_value(datax.attr, datax, datax.attr);
+    $.fn.attr = $.wraps.wrapper_name_value(data.attr, data, data.attr);
 
-    $.fn.removeAttr = $.wraps.wrapper_every_act(datax.removeAttr, datax);
+    $.fn.removeAttr = $.wraps.wrapper_every_act(data.removeAttr, data);
 
-    $.fn.prop = $.wraps.wrapper_name_value(datax.prop, datax, datax.prop);
+    $.fn.prop = $.wraps.wrapper_name_value(data.prop, data, data.prop);
 
-    $.fn.removeProp = $.wraps.wrapper_every_act(datax.removeProp, datax);
+    $.fn.removeProp = $.wraps.wrapper_every_act(data.removeProp, data);
 
-    $.fn.data = $.wraps.wrapper_name_value(datax.data, datax, datax.data);
+    $.fn.data = $.wraps.wrapper_name_value(data.data, data, data.data);
 
-    $.fn.removeData = $.wraps.wrapper_every_act(datax.removeData, datax);
+    $.fn.removeData = $.wraps.wrapper_every_act(data.removeData, data);
 
-    $.fn.val = $.wraps.wrapper_value(datax.val, datax, datax.val);
+    $.fn.val = $.wraps.wrapper_value(data.val, data, data.val);
 
 
-	return data;
+    return data;
 });
 define('skylark-domx-data', ['skylark-domx-data/main'], function (main) { return main; });
 
@@ -9387,7 +9403,7 @@ define('skylark-domx-contents/Clipboard',[
         if (_this.pasting || _this._pasteBin) {
           return;
         }
-        if (_this.editable.triggerHandler(e) === false) {
+        if (_this.editable.trigger(e) === false) {
           return false;
         }
         range = _this.editable.selection.deleteRangeContents();

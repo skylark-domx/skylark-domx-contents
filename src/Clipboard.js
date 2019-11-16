@@ -28,7 +28,7 @@ define([
         if (_this.pasting || _this._pasteBin) {
           return;
         }
-        if (_this.editable.triggerHandler(e) === false) {
+        if (_this.editable.trigger(e) === false) {
           return false;
         }
         range = _this.editable.selection.deleteRangeContents();
