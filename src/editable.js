@@ -406,6 +406,9 @@ define([
 
 	// toggle
 	title : function(param,disableTag) {
+		document.execCommand('formatBlock', false, param);
+
+		/*
 	    var $rootNodes;
 	    $rootNodes = this.selection.rootNodes();
 	    this.selection.save();
@@ -420,6 +423,7 @@ define([
 	      };
 	    })(this));
 	    this.selection.restore();
+	    */
 	    return this.trigger('valuechanged');
 
 	}

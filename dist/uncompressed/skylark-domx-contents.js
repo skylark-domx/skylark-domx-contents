@@ -1714,12 +1714,12 @@ define('skylark-domx-contents/Keystroke',[
           return true;
         }
         $blockEl = _this.editable.selection.blockNodes().last();
-        if ($blockEl.is('.' + this.opts.classPrefix + 'resize-handle') && $rootBlock.is('.' + this.opts.classPrefix + 'table')) {
+        if ($blockEl.is('.' + _this.opts.classPrefix + 'resize-handle') && $rootBlock.is('.' + _this.opts.classPrefix + 'table')) {
           e.preventDefault();
           $rootBlock.remove();
           _this.editable.selection.setRangeAtEndOf($prevBlockEl);
         }
-        if ($prevBlockEl.is('.' + this.opts.classPrefix + 'table') && !$blockEl.is('table') && _this.editable.util.isEmptyNode($blockEl)) {
+        if ($prevBlockEl.is('.' + _this.opts.classPrefix + 'table') && !$blockEl.is('table') && _this.editable.util.isEmptyNode($blockEl)) {
           e.preventDefault();
           $blockEl.remove();
           _this.editable.selection.setRangeAtEndOf($prevBlockEl);
@@ -1736,9 +1736,9 @@ define('skylark-domx-contents/Keystroke',[
     this.add('enter', 'div', (function(_this) {
       return function(e, $node) {
         var $blockEl, $p;
-        if ($node.is('.' + this.opts.classPrefix + 'table')) {
+        if ($node.is('.' + _this.opts.classPrefix + 'table')) {
           $blockEl = _this.editable.selection.blockNodes().last();
-          if ($blockEl.is('.' + this.opts.classPrefix + 'resize-handle')) {
+          if ($blockEl.is('.' + _this.opts.classPrefix + 'resize-handle')) {
             e.preventDefault();
             $p = $('<p/>').append(_this.editable.util.phBr).insertAfter($node);
             return _this.editable.selection.setRangeAtStartOf($p);
@@ -3127,6 +3127,9 @@ define('skylark-domx-contents/Editable',[
 
 	// toggle
 	title : function(param,disableTag) {
+		document.execCommand('formatBlock', false, param);
+
+		/*
 	    var $rootNodes;
 	    $rootNodes = this.selection.rootNodes();
 	    this.selection.save();
@@ -3141,6 +3144,7 @@ define('skylark-domx-contents/Editable',[
 	      };
 	    })(this));
 	    this.selection.restore();
+	    */
 	    return this.trigger('valuechanged');
 
 	}
