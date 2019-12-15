@@ -8372,7 +8372,7 @@ define('skylark-domx-contents/UndoManager',[
     if (this._index < 1 || this._stack.length < 2) {
       return;
     }
-    this.editable.hidePopover();
+    //this.editable.hidePopover();
     this._index -= 1;
     state = this._stack[this._index];
     this.editable.body.get(0).innerHTML = state.html;
@@ -8387,7 +8387,7 @@ define('skylark-domx-contents/UndoManager',[
     if (this._index < 0 || this._stack.length < this._index + 2) {
       return;
     }
-    this.editable.hidePopover();
+    //this.editable.hidePopover();
     this._index += 1;
     state = this._stack[this._index];
     this.editable.body.get(0).innerHTML = state.html;
@@ -9475,7 +9475,7 @@ define('skylark-domx-contents/Clipboard',[
     return setTimeout((function(_this) {
       return function() {
         var pasteContent;
-        _this.editable.hidePopover();
+        //_this.editable.hidePopover();
         _this.editable.body.get(0).innerHTML = state.html;
         _this.editable.undoManager.caretPosition(state.caret);
         _this.editable.body.focus();

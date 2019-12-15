@@ -98,7 +98,7 @@ define([
     return setTimeout((function(_this) {
       return function() {
         var pasteContent;
-        _this.editable.hidePopover();
+        //_this.editable.hidePopover();
         _this.editable.body.get(0).innerHTML = state.html;
         _this.editable.undoManager.caretPosition(state.caret);
         _this.editable.body.focus();
