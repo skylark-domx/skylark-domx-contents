@@ -89,7 +89,7 @@ define([
 
   Clipboard.prototype._getPasteContent = function(callback) {
     var state;
-    this._pasteBin = $('<div contenteditable="true" />').addClass(this.opts.classPrefix + 'paste-bin').attr('tabIndex', '-1').appendTo(this.editable.$el);
+    this._pasteBin = $('<div contenteditable="true" />').addClass('paste-bin').attr('tabIndex', '-1').appendTo(this.editable.$el);
     state = {
       html: this.editable.body.html(),
       caret: this.editable.undoManager.caretPosition()
@@ -115,7 +115,7 @@ define([
           _this._cleanPasteFontSize(pasteContent);
           _this.editable.formatter.format(pasteContent);
           _this.editable.formatter.decorate(pasteContent);
-          _this.editable.formatter.beautify(pasteContent.children());
+          //_this.editable.formatter.beautify(pasteContent.children());
           pasteContent = pasteContent.contents();
         }
         _this._pasteBin.remove();
@@ -127,7 +127,7 @@ define([
 
   Clipboard.prototype._processPasteContent = function(pasteContent) {
     var $blockEl, $img, blob, children, dataURLtoBlob, img, insertPosition, k, l, lastLine, len, len1, len2, len3, len4, line, lines, m, node, o, q, ref, ref1, ref2, uploadOpt, uploader;
-    if (this.editable.triggerHandler('pasting', [pasteContent]) === false) {
+    if (this.editable.trigger('pasting', [pasteContent]) === false) {
       return;
     }
     $blockEl = this._pasteInBlockEl;

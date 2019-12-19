@@ -302,18 +302,19 @@ define([
     },
 
     beautify : function($contents) {
-      var uselessP;
+      var uselessP,
+          _this = this;
       uselessP = function($el) {
         return !!($el.is('p') && !$el.text() && $el.children(':not(br)').length < 1);
       };
       return $contents.each(function(i, el) {
         var $el, invalid;
         $el = $(el);
-        invalid = $el.is(':not(img, br, col, td, hr, [class^="' + this.opts.classPrefix + '"]):empty');
+        invalid = $el.is(':not(img, br, col, td, hr, [class^="' + _this.opts.classPrefix + '"]):empty');
         if (invalid || uselessP($el)) {
           $el.remove();
         }
-        return $el.find(':not(img, br, col, td, hr, [class^="' + this.opts.classPrefix + '"]):empty').remove();
+        return $el.find(':not(img, br, col, td, hr, [class^="' + _this.opts.classPrefix + '"]):empty').remove();
       });
     }
 

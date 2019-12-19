@@ -152,7 +152,7 @@ define([
 
 	},
 
-	blockquote : function(htmlTag,disableTag) {
+	blockquote : function(disableTag) {
 	    var $rootNodes, clearCache, nodeCache;
 	    $rootNodes = this.selection.rootNodes();
 	    $rootNodes = $rootNodes.filter(function(i, node) {
@@ -160,14 +160,12 @@ define([
 	    });
 	    this.selection.save();
 	    nodeCache = [];
-	    clearCache = (function(_this) {
-	      return function() {
+	    clearCache = function() {
 	        if (nodeCache.length > 0) {
-	          $("<" + _this.htmlTag + "/>").insertBefore(nodeCache[0]).append(nodeCache);
+	          $("<blockquote/>").insertBefore(nodeCache[0]).append(nodeCache);
 	          return nodeCache.length = 0;
 	        }
-	      };
-	    })(this);
+	    };
 	    $rootNodes.each((function(_this) {
 	      return function(i, node) {
 	        var $node;
@@ -175,7 +173,7 @@ define([
 	        if (!$node.parent().is(_this.body)) {
 	          return;
 	        }
-	        if ($node.is(htmlTag)) {
+	        if ($node.is('blockquote')) {
 	          clearCache();
 	          return $node.children().unwrap();
 	        } else if ($node.is(disableTag) || _this.util.isDecoratedNode($node)) {

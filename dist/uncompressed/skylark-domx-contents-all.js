@@ -6456,7 +6456,8 @@ define('skylark-domx-query/query',[
                 return this.before(newContent).remove();
             },
 
-            wrap: function(structure) {
+            wrap: function(html) {
+                /*
                 var func = isFunction(structure)
                 if (this[0] && !func)
                     var dom = $(structure).get(0),
@@ -6468,9 +6469,16 @@ define('skylark-domx-query/query',[
                         clone ? dom.cloneNode(true) : dom
                     )
                 })
+                */
+                var htmlIsFunction = typeof html === "function";
+
+                return this.each( function( i ) {
+                    $( this ).wrapAll( htmlIsFunction ? html.call( this, i ) : html );
+                } );                
             },
 
-            wrapAll: function(wrappingElement) {
+            wrapAll: function(html) {
+                /*
                 if (this[0]) {
                     $(this[0]).before(wrappingElement = $(wrappingElement));
                     var children;
@@ -6481,9 +6489,38 @@ define('skylark-domx-query/query',[
                     $(wrappingElement).append(this);
                 }
                 return this
+                */
+                var wrap;
+
+                if ( this[ 0 ] ) {
+                    if ( typeof html === "function" ) {
+                        html = html.call( this[ 0 ] );
+                    }
+
+                    // The elements to wrap the target around
+                    wrap = $( html, this[ 0 ].ownerDocument ).eq( 0 ).clone( true );
+
+                    if ( this[ 0 ].parentNode ) {
+                        wrap.insertBefore( this[ 0 ] );
+                    }
+
+                    wrap.map( function() {
+                        var elem = this;
+
+                        while ( elem.firstElementChild ) {
+                            elem = elem.firstElementChild;
+                        }
+
+                        return elem;
+                    } ).append( this );
+                }
+
+                return this;
+
             },
 
-            wrapInner: function(wrappingElement) {
+            wrapInner: function(html) {
+                /*
                 var func = isFunction(wrappingElement)
                 return this.each(function(index,node) {
                     var self = $(this),
@@ -6491,9 +6528,29 @@ define('skylark-domx-query/query',[
                         dom = func ? wrappingElement.call(this, index,node) : wrappingElement
                     contents.length ? contents.wrapAll(dom) : self.append(dom)
                 })
+                */
+                if ( typeof html === "function" ) {
+                    return this.each( function( i ) {
+                        $( this ).wrapInner( html.call( this, i ) );
+                    } );
+                }
+
+                return this.each( function() {
+                    var self = $( this ),
+                        contents = self.contents();
+
+                    if ( contents.length ) {
+                        contents.wrapAll( html );
+
+                    } else {
+                        self.append( html );
+                    }
+                } );
+
             },
 
             unwrap: function(selector) {
+                /*
                 if (this.parent().children().length === 0) {
                     // remove dom without text
                     this.parent(selector).not("body").each(function() {
@@ -6505,6 +6562,12 @@ define('skylark-domx-query/query',[
                     });
                 }
                 return this
+                */
+                this.parent(selector).not("body").each( function() {
+                    $(this).replaceWith(this.childNodes);
+                });
+                return this;
+
             },
 
             clone: function() {
@@ -9149,18 +9212,19 @@ define('skylark-domx-contents/Formatter',[
     },
 
     beautify : function($contents) {
-      var uselessP;
+      var uselessP,
+          _this = this;
       uselessP = function($el) {
         return !!($el.is('p') && !$el.text() && $el.children(':not(br)').length < 1);
       };
       return $contents.each(function(i, el) {
         var $el, invalid;
         $el = $(el);
-        invalid = $el.is(':not(img, br, col, td, hr, [class^="' + this.opts.classPrefix + '"]):empty');
+        invalid = $el.is(':not(img, br, col, td, hr, [class^="' + _this.opts.classPrefix + '"]):empty');
         if (invalid || uselessP($el)) {
           $el.remove();
         }
-        return $el.find(':not(img, br, col, td, hr, [class^="' + this.opts.classPrefix + '"]):empty').remove();
+        return $el.find(':not(img, br, col, td, hr, [class^="' + _this.opts.classPrefix + '"]):empty').remove();
       });
     }
 
@@ -9466,7 +9530,7 @@ define('skylark-domx-contents/Clipboard',[
 
   Clipboard.prototype._getPasteContent = function(callback) {
     var state;
-    this._pasteBin = $('<div contenteditable="true" />').addClass(this.opts.classPrefix + 'paste-bin').attr('tabIndex', '-1').appendTo(this.editable.$el);
+    this._pasteBin = $('<div contenteditable="true" />').addClass('paste-bin').attr('tabIndex', '-1').appendTo(this.editable.$el);
     state = {
       html: this.editable.body.html(),
       caret: this.editable.undoManager.caretPosition()
@@ -9492,7 +9556,7 @@ define('skylark-domx-contents/Clipboard',[
           _this._cleanPasteFontSize(pasteContent);
           _this.editable.formatter.format(pasteContent);
           _this.editable.formatter.decorate(pasteContent);
-          _this.editable.formatter.beautify(pasteContent.children());
+          //_this.editable.formatter.beautify(pasteContent.children());
           pasteContent = pasteContent.contents();
         }
         _this._pasteBin.remove();
@@ -9504,7 +9568,7 @@ define('skylark-domx-contents/Clipboard',[
 
   Clipboard.prototype._processPasteContent = function(pasteContent) {
     var $blockEl, $img, blob, children, dataURLtoBlob, img, insertPosition, k, l, lastLine, len, len1, len2, len3, len4, line, lines, m, node, o, q, ref, ref1, ref2, uploadOpt, uploader;
-    if (this.editable.triggerHandler('pasting', [pasteContent]) === false) {
+    if (this.editable.trigger('pasting', [pasteContent]) === false) {
       return;
     }
     $blockEl = this._pasteInBlockEl;
@@ -9804,7 +9868,7 @@ define('skylark-domx-contents/Editable',[
 
 	},
 
-	blockquote : function(htmlTag,disableTag) {
+	blockquote : function(disableTag) {
 	    var $rootNodes, clearCache, nodeCache;
 	    $rootNodes = this.selection.rootNodes();
 	    $rootNodes = $rootNodes.filter(function(i, node) {
@@ -9812,14 +9876,12 @@ define('skylark-domx-contents/Editable',[
 	    });
 	    this.selection.save();
 	    nodeCache = [];
-	    clearCache = (function(_this) {
-	      return function() {
+	    clearCache = function() {
 	        if (nodeCache.length > 0) {
-	          $("<" + _this.htmlTag + "/>").insertBefore(nodeCache[0]).append(nodeCache);
+	          $("<blockquote/>").insertBefore(nodeCache[0]).append(nodeCache);
 	          return nodeCache.length = 0;
 	        }
-	      };
-	    })(this);
+	    };
 	    $rootNodes.each((function(_this) {
 	      return function(i, node) {
 	        var $node;
@@ -9827,7 +9889,7 @@ define('skylark-domx-contents/Editable',[
 	        if (!$node.parent().is(_this.body)) {
 	          return;
 	        }
-	        if ($node.is(htmlTag)) {
+	        if ($node.is('blockquote')) {
 	          clearCache();
 	          return $node.children().unwrap();
 	        } else if ($node.is(disableTag) || _this.util.isDecoratedNode($node)) {
