@@ -9556,7 +9556,7 @@ define('skylark-domx-contents/Clipboard',[
           _this._cleanPasteFontSize(pasteContent);
           _this.editable.formatter.format(pasteContent);
           _this.editable.formatter.decorate(pasteContent);
-          //_this.editable.formatter.beautify(pasteContent.children());
+          _this.editable.formatter.beautify(pasteContent.children());
           pasteContent = pasteContent.contents();
         }
         _this._pasteBin.remove();
