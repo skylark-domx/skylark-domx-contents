@@ -4,7 +4,7 @@
   "description": "A dom plugin for  editing  the content of html element.",
   "main": "-",
   "scripts": {
-    "build": "sbundle build .",
+    "build": "slib build .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "homepage": "www.skylarkjs.org",
